@@ -74,7 +74,9 @@ peer lifecycle chaincode querycommitted --channelID mychannel --name basic
 // Version: 1.0, Sequence: 1, Endorsement Plugin: escc, Validation Plugin: vscc, Approvals: [Org1MSP: true, Org2MSP: true]
 
 
-// open new terminal, run:
+// Replace the `rest-api-go` directory in `fabric-samples/asset-transfer-basic`
+// with the version provided in this github repository.  
+// Then, open a new terminal, and run:
 cd fabric-samples/asset-transfer-basic/rest-api-go
 go run main.go
 
