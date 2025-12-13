@@ -8,7 +8,7 @@ first_sc – sadrži pametan ugovor namenjen za upravljanje podacima o proizvodi
 
 rest-api-go – jednostavna Go aplikacija koja funkcioniše kao server za obradu REST zahteva i omogućava interakciju sa pametnim ugovorom. Aplikacija je preuzeta iz fabric-samples repozitorijuma (modul asset-transfer-basic) i prilagođena za potrebe ovog projekta.
 
-Z3.ipynb - formalna verifikacija pojednostavljenog modela proizvoda i ocena uz korišćenjem Z3 solvera
+Z3.ipynb - formalna verifikacija pojednostavljenog modela proizvoda i ocena korišćenjem Z3 solvera
 
 Napomena: Pre testiranja pametnog ugovora, neophodno je pratiti uputstvo za instalaciju potrebnog softvera i preuzimanje fabric-samples repozitorijuma sa zvaničnog HLF sajta:
 
