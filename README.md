@@ -1,1 +1,17 @@
 # chaincode-formal-verification
+
+Ovaj repozitorijum sadrži implementaciju pametnog ugovora za upravljanje podacima o proizvodima i njihovim ocenama, zajedno sa pomoćnim alatima za testiranje i verifikaciju.
+
+# Struktura repozitorijuma
+
+first_sc – sadrži pametan ugovor namenjen za upravljanje podacima o proizvodima i njihovim ocenama, napisan u programskom jeziku Go za Hyperledger Fabric (HLF) platformu, zajedno sa detaljnim uputstvom za njegovo pokretanje i testiranje
+
+rest-api-go – jednostavna Go aplikacija koja funkcioniše kao server za obradu REST zahteva i omogućava interakciju sa pametnim ugovorom. Aplikacija je preuzeta iz fabric-samples repozitorijuma (modul asset-transfer-basic) i prilagođena za potrebe ovog projekta.
+
+Z3.ipynb - formalna verifikacija pojednostavljenog modela proizvoda i ocena uz korišćenjem Z3 solvera
+
+Napomena: Pre testiranja pametnog ugovora, neophodno je pratiti uputstvo za instalaciju potrebnog softvera i preuzimanje fabric-samples repozitorijuma sa zvaničnog HLF sajta:
+
+https://hyperledger-fabric.readthedocs.io/en/release-2.4/getting_started.html
+
+Nakon toga, sledite uputstvo za pokretanje koje se nalazi unutar first_sc direktorijuma.
