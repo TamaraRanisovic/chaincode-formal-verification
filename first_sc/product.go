@@ -6,6 +6,7 @@ import (
   "log"
   "strings"
   "github.com/hyperledger/fabric-contract-api-go/contractapi"
+  "time"
 )
 
 // SmartContract provides functions for managing an Asset
@@ -28,6 +29,25 @@ type Product struct {
   Ratings     []Rating `json:"Ratings"`
   SellerID  string   `json:"SellerID"`
   Sold      int      `json:"Sold"`
+}
+
+type ProductHistoryRecord struct {
+    TxID      string  `json:"txId"`
+    Timestamp string  `json:"timestamp"`
+    IsDelete  bool    `json:"isDelete"`
+    Product   Product `json:"product"`
+}
+
+type ProductDiff struct {
+    Field    string      `json:"field"`
+    OldValue interface{} `json:"oldValue"`
+    NewValue interface{} `json:"newValue"`
+}
+
+type ProductDiffRecord struct {
+    TxID      string        `json:"txId"`
+    Timestamp string        `json:"timestamp"`
+    Diffs     []ProductDiff `json:"diffs"`
 }
 
 
@@ -477,6 +497,123 @@ func (s *SmartContract) SearchProductsByName(ctx contractapi.TransactionContextI
 
     return matchingProducts, nil
 }
+
+
+
+func (s *SmartContract) GetProductHistory(
+    ctx contractapi.TransactionContextInterface,
+    productID string,
+) ([]ProductHistoryRecord, error) {
+
+    iterator, err := ctx.GetStub().GetHistoryForKey(productID)
+    if err != nil {
+        return nil, err
+    }
+    defer iterator.Close()
+
+    var history []ProductHistoryRecord
+
+    for iterator.HasNext() {
+        response, err := iterator.Next()
+        if err != nil {
+            return nil, err
+        }
+
+        var product Product
+        if !response.IsDelete {
+            _ = json.Unmarshal(response.Value, &product)
+        }
+
+        record := ProductHistoryRecord{
+            TxID:      response.TxId,
+            Timestamp: response.Timestamp.AsTime().Format(time.RFC3339),
+            IsDelete:  response.IsDelete,
+            Product:   product,
+        }
+
+        history = append(history, record)
+    }
+
+    return history, nil
+}
+
+
+
+
+func CalculateProductDiffs(oldP Product, newP Product) []ProductDiff {
+    diffs := []ProductDiff{}
+
+    if oldP.Price != newP.Price {
+        diffs = append(diffs, ProductDiff{
+            Field:    "Price",
+            OldValue: oldP.Price,
+            NewValue: newP.Price,
+        })
+    }
+
+    if oldP.Quantity != newP.Quantity {
+        diffs = append(diffs, ProductDiff{
+            Field:    "Quantity",
+            OldValue: oldP.Quantity,
+            NewValue: newP.Quantity,
+        })
+    }
+
+    if oldP.Sold != newP.Sold {
+        diffs = append(diffs, ProductDiff{
+            Field:    "Sold",
+            OldValue: oldP.Sold,
+            NewValue: newP.Sold,
+        })
+    }
+
+    // Proveravamo samo da li je dodata nova ocena
+    if len(newP.Ratings) > len(oldP.Ratings) {
+        newRatings := newP.Ratings[len(oldP.Ratings):] // uzimamo samo novododate
+        for _, r := range newRatings {
+            diffs = append(diffs, ProductDiff{
+                Field:    "NewRating",
+                OldValue: nil,
+                NewValue: r,
+            })
+        }
+    }
+
+    return diffs
+}
+
+
+
+func (s *SmartContract) GetProductHistoryDiff(
+    ctx contractapi.TransactionContextInterface,
+    productID string,
+) ([]ProductDiffRecord, error) {
+
+    history, err := s.GetProductHistory(ctx, productID)
+    if err != nil {
+        return nil, err
+    }
+
+    var diffRecords []ProductDiffRecord
+
+    for i := 1; i < len(history); i++ {
+        oldVersion := history[i]
+        newVersion := history[i-1]
+
+        diffs := CalculateProductDiffs(oldVersion.Product, newVersion.Product)
+        if len(diffs) > 0 {
+            diffRecords = append(diffRecords, ProductDiffRecord{
+                TxID:      newVersion.TxID,
+                Timestamp: newVersion.Timestamp,
+                Diffs:     diffs,
+            })
+        }
+    }
+
+    return diffRecords, nil
+}
+
+
 
 
 
