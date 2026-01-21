@@ -1,0 +1,4 @@
+num_products,create_mean_ms,read_mean_ms,getall_mean_ms,batch_total_ms
+10,47.22,33.69,19.09,17.99
+100,63.28,101.11,25.19,129.05
+1000,54.68,10.30,83.60,3985.37
