@@ -7,9 +7,9 @@ import (
   "strings"
   "github.com/hyperledger/fabric-contract-api-go/contractapi"
   "time"
+  "strconv"
 )
 
-// SmartContract provides functions for managing an Asset
 type SmartContract struct {
   contractapi.Contract
 }
@@ -184,9 +184,9 @@ func (s *SmartContract) CreateProduct(ctx contractapi.TransactionContextInterfac
         Name:      name,
         Price:     price,
         Quantity:  quantity,
-        Ratings:   []Rating{}, // initially empty
+        Ratings:   []Rating{},
         SellerID:  sellerID,
-        Sold:      0, // inicijalno nijedan prodat proizvod
+        Sold:      0,
     }
     productJSON, err := json.Marshal(product)
     if err != nil {
@@ -194,6 +194,66 @@ func (s *SmartContract) CreateProduct(ctx contractapi.TransactionContextInterfac
     }
 
     return ctx.GetStub().PutState(productID, productJSON)
+}
+
+
+
+func (s *SmartContract) CreateProductsBatch(
+    ctx contractapi.TransactionContextInterface,
+    products [][]string,
+) error {
+
+    for i, p := range products {
+        if len(p) != 5 {
+            return fmt.Errorf("product at index %d has invalid number of fields, expected 5", i)
+        }
+
+        productID := p[0]
+        name := p[1]
+        priceStr := p[2]
+        quantityStr := p[3]
+        sellerID := p[4]
+
+        price, err := strconv.ParseFloat(priceStr, 64)
+        if err != nil {
+            return fmt.Errorf("invalid price for product %s: %v", productID, err)
+        }
+
+        quantity, err := strconv.Atoi(quantityStr)
+        if err != nil {
+            return fmt.Errorf("invalid quantity for product %s: %v", productID, err)
+        }
+
+        exists, err := s.ProductExists(ctx, productID)
+        if err != nil {
+            return err
+        }
+        if exists {
+            return fmt.Errorf("product %s already exists", productID)
+        }
+
+        product := Product{
+            ProductID: productID,
+            Name:      name,
+            Price:     price,
+            Quantity:  quantity,
+            Ratings:   []Rating{},
+            SellerID:  sellerID,
+            Sold:      0,
+        }
+
+        productJSON, err := json.Marshal(product)
+        if err != nil {
+            return err
+        }
+
+        err = ctx.GetStub().PutState(productID, productJSON)
+        if err != nil {
+            return fmt.Errorf("failed to put state for product %s: %v", productID, err)
+        }
+    }
+
+    return nil
 }
 
 
@@ -259,7 +319,6 @@ func (s *SmartContract) UpdateProduct(ctx contractapi.TransactionContextInterfac
 
     return ctx.GetStub().PutState(productID, updatedProductJSON)
 }
-
 
 
 
@@ -334,7 +393,7 @@ func (s *SmartContract) GetProductAverageRating(ctx contractapi.TransactionConte
     }
 
     if len(product.Ratings) == 0 {
-        return 0, nil // no ratings yet
+        return 0, nil
     }
 
     var total int
@@ -539,7 +598,6 @@ func (s *SmartContract) GetProductHistory(
 
 
 
-
 func CalculateProductDiffs(oldP Product, newP Product) []ProductDiff {
     diffs := []ProductDiff{}
 
@@ -567,9 +625,8 @@ func CalculateProductDiffs(oldP Product, newP Product) []ProductDiff {
         })
     }
 
-    // Proveravamo samo da li je dodata nova ocena
     if len(newP.Ratings) > len(oldP.Ratings) {
-        newRatings := newP.Ratings[len(oldP.Ratings):] // uzimamo samo novododate
+        newRatings := newP.Ratings[len(oldP.Ratings):]
         for _, r := range newRatings {
             diffs = append(diffs, ProductDiff{
                 Field:    "NewRating",
@@ -612,8 +669,6 @@ func (s *SmartContract) GetProductHistoryDiff(
 
     return diffRecords, nil
 }
-
-
 
 
 
